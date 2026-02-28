@@ -41,6 +41,9 @@ ${typeInstruction}
 6. Deduplicate: if the same event appears multiple times, include it only once.
 7. Include the exact source_snippet from the syllabus (verbatim, max 100 chars).
 8. Prefix each event title with the course name (e.g., "${request.courseName} HW 3").
+9. Location rules:
+   - If an exam/quiz has no specific location listed, use the lecture/class location if one is mentioned anywhere in the syllabus.
+   - If no location is mentioned anywhere in the syllabus at all, set location to null. Do NOT make up locations.
 
 ## Output Format
 Return a JSON array of objects with these exact fields:

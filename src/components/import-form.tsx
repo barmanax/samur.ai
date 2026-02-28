@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,11 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ExtractionRequest } from "@/lib/types";
-import { PdfUploader } from "./pdf-uploader";
 
 interface ImportFormProps {
-  onSubmit: (request: ExtractionRequest) => void;
+  onSubmit: (formData: FormData) => void;
   loading: boolean;
 }
 
@@ -43,11 +41,47 @@ export function ImportForm({ onSubmit, loading }: ImportFormProps) {
   const [timezone, setTimezone] = useState("America/Chicago");
   const [eventTypes, setEventTypes] = useState<"assignments" | "assessments" | "both">("both");
   const [syllabusText, setSyllabusText] = useState("");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [inputMode, setInputMode] = useState<"text" | "pdf">("text");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const hasInput = inputMode === "pdf" ? !!pdfFile : !!syllabusText.trim();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!courseName.trim() || !syllabusText.trim()) return;
-    onSubmit({ courseName, semester, semesterStartDate, timezone, eventTypes, syllabusText });
+    if (!courseName.trim() || !hasInput) return;
+
+    const formData = new FormData();
+    formData.set("courseName", courseName);
+    formData.set("semester", semester);
+    formData.set("semesterStartDate", semesterStartDate);
+    formData.set("timezone", timezone);
+    formData.set("eventTypes", eventTypes);
+
+    if (inputMode === "pdf" && pdfFile) {
+      formData.set("pdfFile", pdfFile);
+    } else {
+      formData.set("syllabusText", syllabusText);
+    }
+
+    onSubmit(formData);
+  };
+
+  const handleFileDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file?.type === "application/pdf") {
+      setPdfFile(file);
+      setInputMode("pdf");
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPdfFile(file);
+      setInputMode("pdf");
+    }
   };
 
   return (
@@ -128,25 +162,99 @@ export function ImportForm({ onSubmit, loading }: ImportFormProps) {
         </div>
       </div>
 
+      {/* Input mode toggle */}
       <div className="space-y-2">
-        <Label htmlFor="syllabus">Syllabus Text</Label>
-        <PdfUploader onTextExtracted={setSyllabusText} />
+        <Label>Syllabus Input</Label>
+        <div className="flex gap-1 rounded-lg bg-muted p-1 w-fit">
+          <button
+            type="button"
+            onClick={() => setInputMode("text")}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+              inputMode === "text"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Paste Text
+          </button>
+          <button
+            type="button"
+            onClick={() => setInputMode("pdf")}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+              inputMode === "pdf"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Upload PDF
+          </button>
+        </div>
+      </div>
+
+      {inputMode === "text" ? (
         <Textarea
           id="syllabus"
-          placeholder="Paste your syllabus text here, or upload a PDF above..."
+          placeholder="Paste your syllabus text here..."
           value={syllabusText}
           onChange={(e) => setSyllabusText(e.target.value)}
           rows={12}
-          required
           className="resize-none"
         />
-      </div>
+      ) : (
+        <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleFileDrop}
+          className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors"
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          {pdfFile ? (
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-primary font-medium">{pdfFile.name}</span>
+              <span className="text-sm text-muted-foreground">
+                ({(pdfFile.size / 1024).toFixed(0)} KB)
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setPdfFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                }}
+                className="cursor-pointer"
+              >
+                Remove
+              </Button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full cursor-pointer py-4"
+            >
+              <p className="text-muted-foreground mb-1">
+                Drop a PDF here or{" "}
+                <span className="text-primary underline">browse</span>
+              </p>
+              <p className="text-xs text-muted-foreground/60">
+                PDF is sent directly to Gemini for better table/formatting understanding
+              </p>
+            </button>
+          )}
+        </div>
+      )}
 
       <Button
         type="submit"
         size="lg"
         className="w-full text-lg py-6 cursor-pointer"
-        disabled={loading || !courseName.trim() || !syllabusText.trim()}
+        disabled={loading || !courseName.trim() || !hasInput}
       >
         Extract Events
       </Button>

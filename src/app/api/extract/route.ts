@@ -2,26 +2,78 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { buildExtractionPrompt } from "@/lib/gemini-prompt";
 import { deduplicateEvents } from "@/lib/dedup";
-import { CalendarEvent, ExtractionRequest } from "@/lib/types";
+import { CalendarEvent } from "@/lib/types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 export async function POST(request: NextRequest) {
   try {
-    const body: ExtractionRequest = await request.json();
+    const contentType = request.headers.get("content-type") || "";
+    let courseName: string;
+    let semester: string;
+    let semesterStartDate: string;
+    let timezone: string;
+    let eventTypes: string;
+    let syllabusText: string | undefined;
+    let pdfBase64: string | undefined;
 
-    if (!body.syllabusText || !body.courseName) {
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      courseName = formData.get("courseName") as string;
+      semester = formData.get("semester") as string;
+      semesterStartDate = formData.get("semesterStartDate") as string;
+      timezone = formData.get("timezone") as string;
+      eventTypes = formData.get("eventTypes") as string;
+      syllabusText = formData.get("syllabusText") as string || undefined;
+
+      const pdfFile = formData.get("pdfFile") as File | null;
+      if (pdfFile) {
+        const buffer = await pdfFile.arrayBuffer();
+        pdfBase64 = Buffer.from(buffer).toString("base64");
+      }
+    } else {
+      const body = await request.json();
+      courseName = body.courseName;
+      semester = body.semester;
+      semesterStartDate = body.semesterStartDate;
+      timezone = body.timezone;
+      eventTypes = body.eventTypes;
+      syllabusText = body.syllabusText;
+    }
+
+    if (!courseName || (!syllabusText && !pdfBase64)) {
       return NextResponse.json(
-        { events: [], error: "Syllabus text and course name are required." },
+        { events: [], error: "Course name and syllabus (text or PDF) are required." },
         { status: 400 }
       );
     }
 
-    const prompt = buildExtractionPrompt(body);
+    const prompt = buildExtractionPrompt({
+      courseName,
+      semester,
+      semesterStartDate,
+      timezone,
+      eventTypes: eventTypes as "assignments" | "assessments" | "both",
+      syllabusText: syllabusText || "(See attached PDF)",
+    });
+
+    // Build contents array for Gemini
+    const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+      { text: prompt },
+    ];
+
+    if (pdfBase64) {
+      parts.push({
+        inlineData: {
+          mimeType: "application/pdf",
+          data: pdfBase64,
+        },
+      });
+    }
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: prompt,
+      contents: [{ role: "user", parts }],
       config: {
         responseMimeType: "application/json",
       },
@@ -80,16 +132,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function validateType(
-  type: unknown
-): CalendarEvent["type"] {
+function validateType(type: unknown): CalendarEvent["type"] {
   const valid = ["assignment", "exam", "quiz", "lab", "project", "other"];
   return valid.includes(String(type)) ? (String(type) as CalendarEvent["type"]) : "other";
 }
 
-function validateConfidence(
-  confidence: unknown
-): CalendarEvent["confidence"] {
+function validateConfidence(confidence: unknown): CalendarEvent["confidence"] {
   const valid = ["high", "medium", "low"];
   return valid.includes(String(confidence))
     ? (String(confidence) as CalendarEvent["confidence"])

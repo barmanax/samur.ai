@@ -8,7 +8,7 @@ import { ImportForm } from "@/components/import-form";
 import { LoadingScreen } from "@/components/loading-screen";
 import { ReviewGrid } from "@/components/review-grid";
 import { ExportPanel } from "@/components/export-panel";
-import { CalendarEvent, ExtractionRequest } from "@/lib/types";
+import { CalendarEvent } from "@/lib/types";
 
 type Step = "landing" | "import" | "loading" | "review" | "export";
 
@@ -34,18 +34,17 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleExtract = async (request: ExtractionRequest) => {
+  const handleExtract = async (formData: FormData) => {
     setLoading(true);
     setError(null);
-    setCourseName(request.courseName);
-    setTimezone(request.timezone);
+    setCourseName(formData.get("courseName") as string);
+    setTimezone(formData.get("timezone") as string);
     setStep("loading");
 
     try {
       const res = await fetch("/api/extract", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
+        body: formData,
       });
 
       const data = await res.json();
