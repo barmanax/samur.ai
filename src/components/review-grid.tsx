@@ -18,6 +18,7 @@ interface ReviewGridProps {
 }
 
 const eventTypes = ["all", "assignment", "exam", "quiz", "lab", "project", "other"] as const;
+const confidenceLevels = ["all", "high", "medium", "low"] as const;
 
 export function ReviewGrid({
   events,
@@ -29,12 +30,17 @@ export function ReviewGrid({
   onBack,
 }: ReviewGridProps) {
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [confidenceFilter, setConfidenceFilter] = useState<string>("all");
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
-  const filtered =
+  const typeFiltered =
     typeFilter === "all"
       ? events
       : events.filter((e) => e.type === typeFilter);
+  const filtered =
+    confidenceFilter === "all"
+      ? typeFiltered
+      : typeFiltered.filter((e) => e.confidence === confidenceFilter);
 
   const selectedCount = events.filter((e) => e.selected).length;
 
@@ -86,6 +92,29 @@ export function ReviewGrid({
               {type !== "all" && (
                 <span className="ml-1 opacity-60">
                   ({events.filter((e) => e.type === type).length})
+                </span>
+              )}
+            </Badge>
+          </button>
+        ))}
+      </div>
+
+      {/* Confidence filter */}
+      <div className="flex gap-2 flex-wrap">
+        {confidenceLevels.map((level) => (
+          <button
+            key={level}
+            onClick={() => setConfidenceFilter(level)}
+            className="cursor-pointer"
+          >
+            <Badge
+              variant={confidenceFilter === level ? "default" : "outline"}
+              className="capitalize cursor-pointer"
+            >
+              {level}
+              {level !== "all" && (
+                <span className="ml-1 opacity-60">
+                  ({typeFiltered.filter((e) => e.confidence === level).length})
                 </span>
               )}
             </Badge>

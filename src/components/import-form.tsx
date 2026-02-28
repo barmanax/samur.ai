@@ -34,6 +34,36 @@ const timezones = [
   { label: "Pacific (Los Angeles)", value: "America/Los_Angeles" },
 ];
 
+function inferCourseNameFromPdf(fileName: string): string | null {
+  const withoutExt = fileName.replace(/\.[^.]+$/, "");
+  const normalized = withoutExt
+    .replace(/[_\-.]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const compact = normalized.replace(/\s+/g, "");
+  const compactMatch = compact.match(/([A-Za-z]{2,6})(\d{2,4})(?:[A-Za-z]\d{2})?/);
+  if (compactMatch) {
+    return `${compactMatch[1].toUpperCase()} ${compactMatch[2]}`;
+  }
+
+  const stripped = normalized
+    .replace(
+      /\b(syllabus|syllabi|outline|schedule|calendar|spring|summer|fall|winter|session|draft|final|updated)\b/gi,
+      " "
+    )
+    .replace(/\b20\d{2}\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const spacedMatch = stripped.match(/\b([A-Za-z]{2,6})\s*(\d{2,4}[A-Za-z]?)\b/);
+  if (spacedMatch) {
+    return `${spacedMatch[1].toUpperCase()} ${spacedMatch[2].toUpperCase()}`;
+  }
+
+  return null;
+}
+
 export function ImportForm({ onSubmit, loading }: ImportFormProps) {
   const [courseName, setCourseName] = useState("");
   const [semester, setSemester] = useState("Spring 2026");
@@ -73,6 +103,10 @@ export function ImportForm({ onSubmit, loading }: ImportFormProps) {
     if (file?.type === "application/pdf") {
       setPdfFile(file);
       setInputMode("pdf");
+      const inferredCourseName = inferCourseNameFromPdf(file.name);
+      if (inferredCourseName && !courseName.trim()) {
+        setCourseName(inferredCourseName);
+      }
     }
   };
 
@@ -81,6 +115,10 @@ export function ImportForm({ onSubmit, loading }: ImportFormProps) {
     if (file) {
       setPdfFile(file);
       setInputMode("pdf");
+      const inferredCourseName = inferCourseNameFromPdf(file.name);
+      if (inferredCourseName && !courseName.trim()) {
+        setCourseName(inferredCourseName);
+      }
     }
   };
 
