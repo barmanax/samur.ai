@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { extractTextFromPdf } from "@/lib/pdf-extract";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -72,12 +73,16 @@ export function ImportForm({ onSubmit, loading }: ImportFormProps) {
   const [eventTypes, setEventTypes] = useState<"assignments" | "assessments" | "both">("both");
   const [syllabusText, setSyllabusText] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfText, setPdfText] = useState("");
+  const [extractingPdf, setExtractingPdf] = useState(false);
   const [inputMode, setInputMode] = useState<"text" | "pdf">("text");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const hasInput = inputMode === "pdf" ? !!pdfFile : !!syllabusText.trim();
+  const hasInput = inputMode === "pdf"
+    ? (!!pdfFile && !extractingPdf && pdfText.length > 0)
+    : !!syllabusText.trim();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!courseName.trim() || !hasInput) return;
 
@@ -87,29 +92,47 @@ export function ImportForm({ onSubmit, loading }: ImportFormProps) {
     formData.set("semesterStartDate", semesterStartDate);
     formData.set("timezone", timezone);
     formData.set("eventTypes", eventTypes);
-
-    if (inputMode === "pdf" && pdfFile) {
-      formData.set("pdfFile", pdfFile);
-    } else {
-      formData.set("syllabusText", syllabusText);
-    }
+    // Always send text — PDF is extracted client-side to avoid proxy body limits
+    formData.set("syllabusText", inputMode === "pdf" ? pdfText : syllabusText);
 
     onSubmit(formData);
   };
 
   const MAX_PDF_BYTES = 10 * 1024 * 1024; // 10 MB
 
-  const acceptPdf = (file: File) => {
+  const acceptPdf = async (file: File) => {
     if (file.type !== "application/pdf") return;
     if (file.size > MAX_PDF_BYTES) {
       alert(`PDF is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Please upload a file under 10 MB.`);
       return;
     }
     setPdfFile(file);
+    setPdfText("");
     setInputMode("pdf");
     const inferredCourseName = inferCourseNameFromPdf(file.name);
     if (inferredCourseName && !courseName.trim()) {
       setCourseName(inferredCourseName);
+    }
+    setExtractingPdf(true);
+    try {
+      const text = await extractTextFromPdf(file);
+      if (text.trim().length < 50) {
+        alert("This PDF has no extractable text (it may be scanned). Please paste the syllabus text instead.");
+        setPdfFile(null);
+        setPdfText("");
+        setInputMode("text");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      } else {
+        setPdfText(text);
+      }
+    } catch {
+      alert("Failed to read the PDF. Please paste the syllabus text instead.");
+      setPdfFile(null);
+      setPdfText("");
+      setInputMode("text");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } finally {
+      setExtractingPdf(false);
     }
   };
 
@@ -259,18 +282,23 @@ export function ImportForm({ onSubmit, loading }: ImportFormProps) {
               <span className="text-sm text-muted-foreground">
                 ({(pdfFile.size / 1024).toFixed(0)} KB)
               </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setPdfFile(null);
-                  if (fileInputRef.current) fileInputRef.current.value = "";
-                }}
-                className="cursor-pointer"
-              >
-                Remove
-              </Button>
+              {extractingPdf ? (
+                <span className="text-xs text-muted-foreground animate-pulse">Reading…</span>
+              ) : (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setPdfFile(null);
+                    setPdfText("");
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  className="cursor-pointer"
+                >
+                  Remove
+                </Button>
+              )}
             </div>
           ) : (
             <button
@@ -283,7 +311,7 @@ export function ImportForm({ onSubmit, loading }: ImportFormProps) {
                 <span className="text-primary underline">browse</span>
               </p>
               <p className="text-xs text-muted-foreground/60">
-                PDF is sent directly to Gemini for better table/formatting understanding
+                Text is extracted in your browser — nothing large is uploaded
               </p>
             </button>
           )}
@@ -294,7 +322,7 @@ export function ImportForm({ onSubmit, loading }: ImportFormProps) {
         type="submit"
         size="lg"
         className="w-full text-lg py-6 cursor-pointer"
-        disabled={loading || !courseName.trim() || !hasInput}
+        disabled={loading || extractingPdf || !courseName.trim() || !hasInput}
       >
         Extract Events
       </Button>
