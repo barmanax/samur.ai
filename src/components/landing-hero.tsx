@@ -1,10 +1,37 @@
 "use client";
 
+import { useTheme } from "./theme-provider";
+
 interface LandingHeroProps {
   onGetStarted: () => void;
 }
 
 export function LandingHero({ onGetStarted }: LandingHeroProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  const c = isDark
+    ? {
+        bg: "#0d0d0d",
+        text: "#f0f0f0",
+        subtitle: "#888",
+        caption: "#444",
+        trunk: "#e8e8e8",
+        samurai: "#e8e8e8",
+        samuraiScabbard: "#b0b0b0",
+        flowerCenter: "#f5789a",
+      }
+    : {
+        bg: "#fcfcfc",
+        text: "#000",
+        subtitle: "#555",
+        caption: "#aaa",
+        trunk: "#0c0c0c",
+        samurai: "#0c0c0c",
+        samuraiScabbard: "#1f1f1f",
+        flowerCenter: "#000",
+      };
+
   return (
     <>
       <style>{`
@@ -59,14 +86,14 @@ export function LandingHero({ onGetStarted }: LandingHeroProps) {
         .sl-cta:hover { background-color: #e06283; transform: translateY(-2px); }
       `}</style>
 
-      {/* Full-screen light container */}
+      {/* Full-screen container */}
       <div style={{
-        backgroundColor: "#fcfcfc",
+        backgroundColor: c.bg,
         minHeight: "100vh",
         width: "100%",
         overflow: "hidden",
         position: "relative",
-        color: "#111",
+        color: c.text,
         fontFamily: "'Inter', 'Geist', sans-serif",
       }}>
 
@@ -86,14 +113,14 @@ export function LandingHero({ onGetStarted }: LandingHeroProps) {
               letterSpacing: "-2px",
               marginBottom: 20,
               lineHeight: 1.1,
-              color: "#000",
+              color: c.text,
             }}>
               Samur<span style={{ color: "#f5789a" }}>.ai</span>
             </h1>
             <p style={{
               fontWeight: 400,
               fontSize: "1.15rem",
-              color: "#555",
+              color: c.subtitle,
               marginBottom: 40,
               lineHeight: 1.6,
             }}>
@@ -103,7 +130,7 @@ export function LandingHero({ onGetStarted }: LandingHeroProps) {
             <button className="sl-cta" onClick={onGetStarted}>
               Get Started
             </button>
-            <p style={{ marginTop: 24, fontSize: "0.85rem", color: "#aaa" }}>
+            <p style={{ marginTop: 24, fontSize: "0.85rem", color: c.caption }}>
               Make time for what matters.
             </p>
           </div>
@@ -141,7 +168,7 @@ export function LandingHero({ onGetStarted }: LandingHeroProps) {
                 <circle cx="13" cy="-4" r="11" fill="#f5789a" />
                 <circle cx="-8" cy="12" r="11" fill="#f5789a" />
                 <circle cx="8" cy="12" r="11" fill="#f5789a" />
-                <circle cx="0" cy="0" r="4" fill="#000" />
+                <circle cx="0" cy="0" r="4" fill={c.flowerCenter} />
               </g>
               <g id="sl-flower-plain">
                 <circle cx="0" cy="-14" r="11" fill="#f5789a" />
@@ -154,7 +181,7 @@ export function LandingHero({ onGetStarted }: LandingHeroProps) {
             </defs>
 
             {/* Ink-brush trunk and branches */}
-            <g fill="#0c0c0c">
+            <g fill={c.trunk}>
               <path d="M650,1000 L600,850 L610,800 L560,650 L580,620 L500,500 L520,490 L590,600 L650,780 L680,1000 Z" />
               <path d="M570,640 L500,580 L420,590 L350,500 L370,490 L450,560 L520,550 L585,610 Z" />
               <path d="M430,570 L380,450 L310,400 L320,380 L390,440 L450,550 Z" />
@@ -206,7 +233,7 @@ export function LandingHero({ onGetStarted }: LandingHeroProps) {
             <use href="#sl-spetal"       transform="translate(450, 620) scale(1.1) rotate(45)"  />
 
             {/* Samurai silhouette — ink-brush style, standing left of trunk */}
-            <g fill="#0c0c0c" transform="translate(478, 1000)">
+            <g fill={c.samurai} transform="translate(478, 1000)">
               {/* Sandals */}
               <rect x="-16" y="-11" width="13" height="11" rx="2" />
               <rect x="3"   y="-11" width="13" height="11" rx="2" />
@@ -239,7 +266,7 @@ export function LandingHero({ onGetStarted }: LandingHeroProps) {
               {/* Tsuba — hand guard */}
               <ellipse cx="40" cy="-79" rx="7" ry="4.5" transform="rotate(-65 40 -79)" />
               {/* Saya — scabbard at left hip */}
-              <path d="M-22,-105 L-50,-58 L-46,-55 L-18,-102 Z" fill="#1f1f1f" />
+              <path d="M-22,-105 L-50,-58 L-46,-55 L-18,-102 Z" fill={c.samuraiScabbard} />
             </g>
           </svg>
         </div>
