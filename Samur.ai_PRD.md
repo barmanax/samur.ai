@@ -224,7 +224,7 @@ Gemini is used for **structured extraction and normalization**:
 **Name:** Samur.ai  
 **Motto ideas:**
 - “Cut through the clutter.”
-- “Focus, sharpened.”
+- “Make time for what matters.”
 
 Visual direction:
 - Dark mode

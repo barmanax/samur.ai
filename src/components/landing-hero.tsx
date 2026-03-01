@@ -88,8 +88,7 @@ export function LandingHero({ onGetStarted }: LandingHeroProps) {
               lineHeight: 1.1,
               color: "#000",
             }}>
-              Samur<br />
-              <span style={{ color: "#f5789a" }}>.ai</span>
+              Samur<span style={{ color: "#f5789a" }}>.ai</span>
             </h1>
             <p style={{
               fontWeight: 400,
@@ -105,7 +104,7 @@ export function LandingHero({ onGetStarted }: LandingHeroProps) {
               Get Started
             </button>
             <p style={{ marginTop: 24, fontSize: "0.85rem", color: "#aaa" }}>
-              Focus, sharpened.
+              Make time for what matters.
             </p>
           </div>
         </main>
