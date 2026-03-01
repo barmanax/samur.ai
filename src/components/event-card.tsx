@@ -85,21 +85,21 @@ export function EventCard({
         {/* Title */}
         <h3 className="font-semibold text-sm leading-tight">{event.title}</h3>
 
-        {/* Date/Time */}
-        <div className="text-sm text-muted-foreground">
-          <p>{formatDate(event.startDate)}</p>
-          {!event.isAllDay && (
-            <p className="text-xs">{formatTime(event.startDate)}</p>
-          )}
-          {event.isAllDay && (
-            <p className="text-xs text-muted-foreground/70">All day</p>
+        {/* Date/Time + Location on same row */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="text-sm text-muted-foreground">
+            <p>{formatDate(event.startDate)}</p>
+            {!event.isAllDay && (
+              <p className="text-xs">{formatTime(event.startDate)}</p>
+            )}
+            {event.isAllDay && (
+              <p className="text-xs text-muted-foreground/70">All day</p>
+            )}
+          </div>
+          {event.location && (
+            <p className="text-xs text-muted-foreground/70 text-right shrink-0 mt-0.5">{event.location}</p>
           )}
         </div>
-
-        {/* Location */}
-        {event.location && (
-          <p className="text-xs text-muted-foreground/70">{event.location}</p>
-        )}
 
         {/* Source snippet */}
         <p className="text-xs text-muted-foreground/50 italic truncate">

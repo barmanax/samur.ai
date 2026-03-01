@@ -204,6 +204,43 @@ export function LandingHero({ onGetStarted }: LandingHeroProps) {
             <use href="#sl-flower-plain" transform="translate(580, 620) scale(0.8) rotate(10)"  />
             <use href="#sl-spetal"       transform="translate(680, 500) scale(1.5) rotate(-20)" />
             <use href="#sl-spetal"       transform="translate(450, 620) scale(1.1) rotate(45)"  />
+
+            {/* Samurai silhouette — ink-brush style, standing left of trunk */}
+            <g fill="#0c0c0c" transform="translate(478, 1000)">
+              {/* Sandals */}
+              <rect x="-16" y="-11" width="13" height="11" rx="2" />
+              <rect x="3"   y="-11" width="13" height="11" rx="2" />
+              {/* Hakama — wide flared pants */}
+              <path d="M-16,-11 L-23,-70 L0,-70 Z" />
+              <path d="M16,-11 L23,-70 L0,-70 Z" />
+              {/* Do — chest armor */}
+              <rect x="-19" y="-136" width="38" height="68" rx="3" />
+              {/* Left osode — shoulder guard */}
+              <path d="M-19,-132 L-40,-120 L-38,-100 L-19,-112 Z" />
+              {/* Right osode — shoulder guard */}
+              <path d="M19,-132 L40,-120 L38,-100 L19,-112 Z" />
+              {/* Left kote — forearm */}
+              <rect x="-42" y="-120" width="13" height="50" rx="5" />
+              {/* Right kote — raised to hold katana */}
+              <path d="M27,-120 L32,-76 L41,-79 L36,-120 Z" />
+              {/* Neck */}
+              <rect x="-5" y="-150" width="10" height="16" />
+              {/* Head */}
+              <ellipse cx="0" cy="-166" rx="17" ry="19" />
+              {/* Kabuto — helmet dome */}
+              <path d="M-17,-164 C-23,-202 23,-202 17,-164 Z" />
+              {/* Shikoro — neck guard flares */}
+              <path d="M-17,-168 L-30,-153 L-25,-144 L-14,-161 Z" />
+              <path d="M17,-168 L30,-153 L25,-144 L14,-161 Z" />
+              {/* Maedate — crescent moon crest */}
+              <path d="M-2,-202 C-10,-220 2,-230 8,-218 C2,-215 -3,-207 -2,-202 Z" />
+              {/* Katana blade */}
+              <path d="M39,-80 L80,-218 L83,-216 L42,-78 Z" />
+              {/* Tsuba — hand guard */}
+              <ellipse cx="40" cy="-79" rx="7" ry="4.5" transform="rotate(-65 40 -79)" />
+              {/* Saya — scabbard at left hip */}
+              <path d="M-22,-105 L-50,-58 L-46,-55 L-18,-102 Z" fill="#1f1f1f" />
+            </g>
           </svg>
         </div>
       </div>
